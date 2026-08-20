@@ -3,80 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ludo Board Companion</title>
+    <title>Ultimate Ludo Game</title>
     <style>
+        :root {
+            --red: #ff4757;
+            --green: #2ed573;
+            --yellow: #feca57;
+            --blue: #1e90ff;
+            --bg: #1f2937;
+            --board-bg: #ffffff;
+            --cell-border: rgba(0, 0, 0, 0.1);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: #e9ecef;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: white;
             margin: 0;
             padding: 10px;
-            touch-action: manipulation; /* Prevents double-tap zooming on mobile */
-        }
-        h2 {
-            margin: 5px 0 15px 0;
-            font-size: 1.5rem;
-            color: #333;
-        }
-        #controls {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 100%;
-            max-width: 450px;
-            margin-bottom: 15px;
-            background: white;
-            padding: 10px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            touch-action: manipulation; /* Prevents mobile double-tap zoom */
         }
-        .dice-row {
+
+        h1 {
+            margin: 5px 0;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* --- UI & Controls --- */
+        #game-info {
+            width: 100%;
+            max-width: 500px;
+            background: #374151;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
             display: flex;
             justify-content: space-between;
-            width: 100%;
-            margin-bottom: 10px;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .dice-btn {
-            flex: 1;
-            font-size: 1.2rem;
+
+        .player-indicator {
+            padding: 8px 15px;
+            border-radius: 20px;
             font-weight: bold;
-            padding: 12px 0;
-            margin: 0 3px;
-            border-radius: 8px;
-            border: 2px solid #ccc;
-            background: #f8f9fa;
-            cursor: pointer;
-            transition: 0.2s;
+            text-transform: capitalize;
+            transition: all 0.3s;
         }
-        .dice-btn:active {
-            transform: scale(0.95);
+
+        /* Pulsing animation for active turn */
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 10px 10px rgba(255, 255, 255, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
         }
-        .dice-btn.active {
-            background: #343a40;
-            color: white;
-            border-color: #343a40;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        .active-turn { animation: pulse 1.5s infinite; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        
+        .active-red { background-color: var(--red); }
+        .active-green { background-color: var(--green); }
+        .active-yellow { background-color: var(--yellow); }
+        .active-blue { background-color: var(--blue); }
+
+        #dice-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        #status {
-            font-size: 1rem;
-            font-weight: bold;
-            color: #d32f2f;
-            height: 20px;
-        }
-        #board-container {
-            position: relative;
-            width: 95vw;
-            height: 95vw;
-            max-width: 450px;
-            max-height: 450px;
+
+        #dice-btn {
+            width: 50px;
+            height: 50px;
             background: white;
-            border: 3px solid #333;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            border-radius: 4px;
-            overflow: hidden;
+            color: black;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #ccc;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
+        #dice-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #ccc;
+        }
+        #dice-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Dice Rolling Animation */
+        @keyframes roll {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        .rolling { animation: roll 0.4s ease-in-out; pointer-events: none; }
+
+        #message {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            text-align: center;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+
+        /* --- Board Grid --- */
+        #board-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1; /* Guarantees a perfect square */
+            background: var(--board-bg);
+            border: 4px solid #111827;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
         #board {
             display: grid;
             grid-template-columns: repeat(15, 1fr);
@@ -84,63 +135,69 @@
             width: 100%;
             height: 100%;
         }
-        .cell {
-            border: 1px solid rgba(0,0,0,0.08);
-            box-sizing: border-box;
-        }
-        #overlay {
+
+        .cell { border: 1px solid var(--cell-border); box-sizing: border-box; }
+
+        /* --- Tokens & Overlays --- */
+        #token-layer {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
             pointer-events: none;
         }
+
         .token {
             position: absolute;
             width: calc(100% / 15);
             height: calc(100% / 15);
             pointer-events: auto;
             cursor: pointer;
-            transition: top 0.4s ease, left 0.4s ease, transform 0.2s;
+            transition: top 0.4s ease-out, left 0.4s ease-out, transform 0.2s; /* Smooth gliding */
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 10;
         }
+
+        .token:hover { transform: scale(1.1); z-index: 20 !important; }
+
         .token-inner {
-            width: 65%;
-            height: 65%;
+            width: 70%;
+            height: 70%;
             border-radius: 50%;
             border: 2px solid white;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.5);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.6), inset 0 -2px 5px rgba(0,0,0,0.3);
         }
-        .token.red .token-inner { background: #e53935; }
-        .token.green .token-inner { background: #43a047; }
-        .token.yellow .token-inner { background: #fdd835; }
-        .token.blue .token-inner { background: #1e88e5; }
+
+        .token.red .token-inner { background: radial-gradient(circle at 30% 30%, #ff7979, var(--red)); }
+        .token.green .token-inner { background: radial-gradient(circle at 30% 30%, #7bed9f, var(--green)); }
+        .token.yellow .token-inner { background: radial-gradient(circle at 30% 30%, #ffdf73, var(--yellow)); }
+        .token.blue .token-inner { background: radial-gradient(circle at 30% 30%, #70a1ff, var(--blue)); }
+
+        .highlight { animation: pulse 1s infinite; z-index: 15; }
     </style>
 </head>
 <body>
 
-    <h2>Ludo Tracker</h2>
+    <h1>Ludo Web</h1>
     
-    <div id="controls">
-        <div class="dice-row">
-            <button class="dice-btn" id="btn-1" onclick="selectDice(1)">1</button>
-            <button class="dice-btn" id="btn-2" onclick="selectDice(2)">2</button>
-            <button class="dice-btn" id="btn-3" onclick="selectDice(3)">3</button>
-            <button class="dice-btn" id="btn-4" onclick="selectDice(4)">4</button>
-            <button class="dice-btn" id="btn-5" onclick="selectDice(5)">5</button>
-            <button class="dice-btn" id="btn-6" onclick="selectDice(6)">6</button>
+    <div id="game-info">
+        <div id="player-display" class="player-indicator active-turn active-red">Red's Turn</div>
+        <div id="dice-container">
+            <button id="dice-btn" onclick="rollDice()">🎲</button>
         </div>
-        <div id="status">Roll physical dice & select a number</div>
     </div>
+    
+    <div id="message">Tap the dice to roll!</div>
 
-    <div id="board-container">
+    <div id="board-wrapper">
         <div id="board"></div>
-        <div id="overlay"></div>
+        <div id="token-layer"></div>
     </div>
 
 <script>
-    // Constants mapping exactly to a 15x15 standard Ludo grid
+    // --- LUDO BOARD CONSTANTS ---
+    // The main 52-step perimeter path around the board
     const mainPath = [
         [6,1],[6,2],[6,3],[6,4],[6,5], [5,6],[4,6],[3,6],[2,6],[1,6],[0,6], [0,7],[0,8],
         [1,8],[2,8],[3,8],[4,8],[5,8], [6,9],[6,10],[6,11],[6,12],[6,13],[6,14], [7,14],[8,14],
@@ -148,6 +205,7 @@
         [13,6],[12,6],[11,6],[10,6],[9,6], [8,5],[8,4],[8,3],[8,2],[8,1],[8,0], [7,0],[6,0]
     ];
 
+    // The 5-step home paths for each color
     const homePaths = {
         red: [[7,1],[7,2],[7,3],[7,4],[7,5]],
         green: [[1,7],[2,7],[3,7],[4,7],[5,7]],
@@ -155,9 +213,12 @@
         blue: [[13,7],[12,7],[11,7],[10,7],[9,7]]
     };
 
+    // Starting offset indices on the main path
     const offsets = { red: 0, green: 13, yellow: 26, blue: 39 };
-    const safeZones = [0, 8, 13, 21, 26, 34, 39, 47]; // Start squares & star squares
+    // Safe spots (Starts and Stars)
+    const safeZones = [0, 8, 13, 21, 26, 34, 39, 47]; 
 
+    // Base wait coordinates
     const baseCoords = {
         red: [[2,2],[2,3],[3,2],[3,3]],
         green: [[2,11],[2,12],[3,11],[3,12]],
@@ -165,81 +226,80 @@
         blue: [[11,2],[11,3],[12,2],[12,3]]
     };
 
+    // Center win spots
     const centerCoords = { red: [7,6], green: [6,7], yellow: [7,8], blue: [8,7] };
 
-    // Initialize state
+    // --- GAME STATE ---
+    const players = ['red', 'green', 'yellow', 'blue'];
+    let currentPlayerIdx = 0;
+    let currentRoll = 0;
+    let gameState = 'WAITING_FOR_ROLL'; // WAITING_FOR_ROLL, WAITING_FOR_MOVE
+
     let tokens = [];
-    const colors = ['red', 'green', 'yellow', 'blue'];
-    colors.forEach(c => {
+    players.forEach(c => {
         for(let i=0; i<4; i++) {
-            tokens.push({ id: i, color: c, progress: -1 }); // -1 means in base
+            tokens.push({ id: i, color: c, progress: -1 }); // -1 = base, 56 = finished
         }
     });
 
-    let selectedRoll = 0;
+    // --- INITIALIZATION ---
+    function initBoard() {
+        const boardEl = document.getElementById('board');
+        const tokenLayer = document.getElementById('token-layer');
 
-    // Build the UI Board Background
-    const boardEl = document.getElementById('board');
-    for (let r = 0; r < 15; r++) {
-        for (let c = 0; c < 15; c++) {
-            let div = document.createElement('div');
-            div.className = 'cell';
-            let bg = 'white';
+        // Draw 15x15 Grid Cells
+        for (let r = 0; r < 15; r++) {
+            for (let c = 0; c < 15; c++) {
+                let div = document.createElement('div');
+                div.className = 'cell';
+                let bg = 'white';
 
-            // Colored Bases
-            if (r < 6 && c < 6) bg = '#ffcdd2'; // Red
-            else if (r < 6 && c > 8) bg = '#c8e6c9'; // Green
-            else if (r > 8 && c < 6) bg = '#bbdefb'; // Blue
-            else if (r > 8 && c > 8) bg = '#fff9c4'; // Yellow
+                // Bases
+                if (r < 6 && c < 6) bg = '#ffcccc';
+                else if (r < 6 && c > 8) bg = '#ccffcc';
+                else if (r > 8 && c < 6) bg = '#cce5ff';
+                else if (r > 8 && c > 8) bg = '#ffffcc';
 
-            // Base inner pockets (where tokens wait)
-            let isPocket = false;
-            Object.values(baseCoords).forEach(arr => {
-                if (arr.some(p => p[0]===r && p[1]===c)) isPocket = true;
-            });
-            if (isPocket) bg = 'white';
+                // Cutout inner base squares to pure white
+                Object.values(baseCoords).forEach(arr => {
+                    if (arr.some(p => p[0]===r && p[1]===c)) bg = 'white';
+                });
 
-            // Home paths
-            if (r === 7 && c >= 1 && c <= 5) bg = '#ef5350';
-            if (c === 7 && r >= 1 && r <= 5) bg = '#66bb6a';
-            if (r === 7 && c >= 9 && c <= 13) bg = '#ffee58';
-            if (c === 7 && r >= 9 && r <= 13) bg = '#42a5f5';
+                // Home colored paths
+                if (r === 7 && c >= 1 && c <= 5) bg = 'var(--red)';
+                if (c === 7 && r >= 1 && r <= 5) bg = 'var(--green)';
+                if (r === 7 && c >= 9 && c <= 13) bg = 'var(--yellow)';
+                if (c === 7 && r >= 9 && r <= 13) bg = 'var(--blue)';
 
-            // Center
-            if (r >= 6 && r <= 8 && c >= 6 && c <= 8) bg = '#333';
+                // Center
+                if (r >= 6 && r <= 8 && c >= 6 && c <= 8) bg = '#2c3e50';
 
-            // Start squares & Safe zones
-            if (r===6 && c===1) bg = '#ef5350'; 
-            if (r===1 && c===8) bg = '#66bb6a'; 
-            if (r===13 && c===6) bg = '#42a5f5'; 
-            if (r===8 && c===13) bg = '#ffee58';
-            if ((r===2 && c===6) || (r===6 && c===12) || (r===12 && c===8) || (r===8 && c===2)) bg = '#e0e0e0';
+                // Safe zones and Starts
+                if (r===6 && c===1) bg = 'var(--red)'; 
+                if (r===1 && c===8) bg = 'var(--green)'; 
+                if (r===13 && c===6) bg = 'var(--blue)'; 
+                if (r===8 && c===13) bg = 'var(--yellow)';
+                if ((r===2 && c===6) || (r===6 && c===12) || (r===12 && c===8) || (r===8 && c===2)) bg = '#e2e8f0'; // Star squares
 
-            div.style.backgroundColor = bg;
-            boardEl.appendChild(div);
+                div.style.backgroundColor = bg;
+                boardEl.appendChild(div);
+            }
         }
-    }
 
-    // Build Token Elements
-    const overlay = document.getElementById('overlay');
-    tokens.forEach(t => {
-        let el = document.createElement('div');
-        el.className = `token ${t.color}`;
-        el.id = `token-${t.color}-${t.id}`;
-        let inner = document.createElement('div');
-        inner.className = 'token-inner';
-        el.appendChild(inner);
-        el.addEventListener('click', () => moveToken(t));
-        overlay.appendChild(el);
-    });
+        // Draw Tokens
+        tokens.forEach(t => {
+            let el = document.createElement('div');
+            el.className = `token ${t.color}`;
+            el.id = `token-${t.color}-${t.id}`;
+            let inner = document.createElement('div');
+            inner.className = 'token-inner';
+            el.appendChild(inner);
+            el.addEventListener('click', () => handleTokenClick(t));
+            tokenLayer.appendChild(el);
+        });
 
-    // Helper: Select Dice
-    function selectDice(val) {
-        selectedRoll = val;
-        document.querySelectorAll('.dice-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + val).classList.add('active');
-        document.getElementById('status').innerText = `Selected Roll: ${val}. Tap a cone to move!`;
-        document.getElementById('status').style.color = "#2e7d32";
+        renderTokens();
+        updateUI();
     }
 
     function getTokenCoords(t) {
@@ -249,7 +309,6 @@
         return centerCoords[t.color];
     }
 
-    // Render positions and handle overlaps
     function renderTokens() {
         let groups = {};
         tokens.forEach(t => {
@@ -264,85 +323,150 @@
             let group = groups[`${r},${c}`];
             let el = document.getElementById(`token-${t.color}-${t.id}`);
             
-            // Adjust visual position if multiple cones share a square (unless in base)
-            if (group.length > 1 && t.progress !== -1 && t.progress <= 55) {
+            // Adjust visual position if multiple tokens share a square (except base/center)
+            if (group.length > 1 && t.progress >= 0 && t.progress <= 55) {
                 let idx = group.indexOf(t);
-                let shifts = [[0,0], [-25,-25], [25,25], [-25,25], [25,-25]];
+                let shifts = [[0,0], [-20,-20], [20,20], [-20,20], [20,-20]];
                 let shift = shifts[idx % 5] || [0,0];
-                el.style.transform = `translate(${shift[0]}%, ${shift[1]}%) scale(0.8)`;
-                el.style.zIndex = 10 + idx;
+                el.style.transform = `translate(${shift[0]}%, ${shift[1]}%) scale(0.75)`;
             } else {
                 el.style.transform = `translate(0, 0) scale(1)`;
-                el.style.zIndex = 10;
             }
 
             el.style.top = `calc(${r} * (100% / 15))`;
             el.style.left = `calc(${c} * (100% / 15))`;
+
+            // Highlight valid tokens if waiting for move
+            if (gameState === 'WAITING_FOR_MOVE' && t.color === players[currentPlayerIdx] && canMove(t, currentRoll)) {
+                el.classList.add('highlight');
+            } else {
+                el.classList.remove('highlight');
+            }
         });
     }
 
-    // Core Move Logic
-    function moveToken(t) {
-        if (!selectedRoll) return alert("Select your dice roll at the top first!");
+    // --- GAME LOGIC ---
+    function rollDice() {
+        if (gameState !== 'WAITING_FOR_ROLL') return;
         
-        let statusEl = document.getElementById('status');
+        let diceBtn = document.getElementById('dice-btn');
+        let msg = document.getElementById('message');
+        diceBtn.disabled = true;
+        diceBtn.classList.add('rolling');
+        msg.innerText = "Rolling...";
 
+        // Fast number shuffling effect
+        let shuffleInt = setInterval(() => { diceBtn.innerText = Math.floor(Math.random()*6)+1; }, 50);
+
+        setTimeout(() => {
+            clearInterval(shuffleInt);
+            diceBtn.classList.remove('rolling');
+            
+            // Final random number
+            currentRoll = Math.floor(Math.random() * 6) + 1;
+            diceBtn.innerText = currentRoll;
+            
+            gameState = 'WAITING_FOR_MOVE';
+            
+            if (checkAvailableMoves()) {
+                msg.innerText = `Rolled a ${currentRoll}! Select a token to move.`;
+                renderTokens();
+            } else {
+                msg.innerText = `Rolled a ${currentRoll}, but no valid moves. Skipping turn...`;
+                setTimeout(nextTurn, 1500);
+            }
+        }, 400);
+    }
+
+    function canMove(t, roll) {
+        if (t.progress === -1) return roll === 6; // Need 6 to exit base
+        if (t.progress + roll > 56) return false; // Needs exact roll to finish
+        return true;
+    }
+
+    function checkAvailableMoves() {
+        let player = players[currentPlayerIdx];
+        let playerTokens = tokens.filter(t => t.color === player);
+        return playerTokens.some(t => canMove(t, currentRoll));
+    }
+
+    function handleTokenClick(t) {
+        if (gameState !== 'WAITING_FOR_MOVE') return;
+        if (t.color !== players[currentPlayerIdx]) return;
+        if (!canMove(t, currentRoll)) return;
+
+        let extraTurn = false;
+        let msg = document.getElementById('message');
+
+        // Move token
         if (t.progress === -1) {
-            if (selectedRoll !== 6) {
-                alert(`You need a 6 to move ${t.color} out of the base!`);
-                return;
-            }
-            t.progress = 0; // Move to start
-        } else if (t.progress >= 0 && t.progress <= 55) {
-            let nextProg = t.progress + selectedRoll;
-            if (nextProg > 56) {
-                alert("You need an exact roll to finish!");
-                return;
-            }
-            t.progress = nextProg;
+            t.progress = 0; // Out of base
         } else {
-            return; // Already finished
+            t.progress += currentRoll;
+            if (t.progress === 56) extraTurn = true; // Reached center
         }
 
-        // Capture Logic (only on main path and not on safe zones)
+        // Capture check
         if (t.progress >= 0 && t.progress <= 50) {
             let boardIdx = (offsets[t.color] + t.progress) % 52;
             if (!safeZones.includes(boardIdx)) {
                 tokens.forEach(other => {
-                    // If opponent is on the exact same main path square
                     if (other.color !== t.color && other.progress >= 0 && other.progress <= 50) {
                         let otherIdx = (offsets[other.color] + other.progress) % 52;
                         if (otherIdx === boardIdx) {
-                            other.progress = -1; // Send back to base
-                            statusEl.innerText = `${other.color.toUpperCase()} was captured!`;
-                            statusEl.style.color = "#d32f2f";
+                            other.progress = -1; // Captured!
+                            extraTurn = true;
+                            msg.innerText = "Captured an opponent! Extra turn!";
                         }
                     }
                 });
             }
         }
 
-        // Reset the dice input after a successful move
-        if(selectedRoll !== 6 || statusEl.innerText.includes("captured")) {
-           // We keep the red capture text or reset to default
-           if(!statusEl.innerText.includes("captured")) {
-                statusEl.innerText = "Roll physical dice & select a number";
-                statusEl.style.color = "#d32f2f";
-           }
-        } else {
-             statusEl.innerText = "Rolled a 6! You get an extra turn.";
-             statusEl.style.color = "#1976d2";
-        }
+        renderTokens();
+
+        // Turn logic
+        setTimeout(() => {
+            if (currentRoll === 6) extraTurn = true;
+
+            if (extraTurn) {
+                if(!msg.innerText.includes("Captured")) msg.innerText = "Extra turn!";
+                gameState = 'WAITING_FOR_ROLL';
+                document.getElementById('dice-btn').disabled = false;
+                document.getElementById('dice-btn').innerText = "🎲";
+                renderTokens(); // Remove highlights
+            } else {
+                nextTurn();
+            }
+        }, 500); // Short delay to watch the animation finish
+    }
+
+    function nextTurn() {
+        currentPlayerIdx = (currentPlayerIdx + 1) % 4;
+        currentRoll = 0;
+        gameState = 'WAITING_FOR_ROLL';
         
-        selectedRoll = 0;
-        document.querySelectorAll('.dice-btn').forEach(b => b.classList.remove('active'));
+        let diceBtn = document.getElementById('dice-btn');
+        diceBtn.disabled = false;
+        diceBtn.innerText = "🎲";
+        document.getElementById('message').innerText = "Tap the dice to roll!";
         
+        updateUI();
         renderTokens();
     }
 
-    // Initial render
-    renderTokens();
+    function updateUI() {
+        let display = document.getElementById('player-display');
+        let color = players[currentPlayerIdx];
+        display.innerText = `${color.charAt(0).toUpperCase() + color.slice(1)}'s Turn`;
+        
+        // Reset classes
+        display.className = 'player-indicator active-turn';
+        display.classList.add(`active-${color}`);
+    }
+
+    // Start game
+    window.onload = initBoard;
 </script>
 </body>
 </html>
-
